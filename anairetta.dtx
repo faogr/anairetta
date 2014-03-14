@@ -1,0 +1,184 @@
+% ^^A -*- japanese-latex -*-
+% \CheckSum{110}
+% \iffalse
+%
+%   anairetta.dtx
+%   数式番号を@anairetta_botの発言にする
+%
+%<anairetta>\NeedsTeXFormat{pLaTeX2e}
+%<anairetta>\ProvidesFile{anairetta.sty}
+%<*driver>
+\documentclass{jsarticle}
+\usepackage{doc}
+\DisableCrossrefs
+\setcounter{StandardModuleDepth}{1}
+\GetFileInfo{anairetta.sty}
+\begin{document}
+  \DocInput{anairetta.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+% \title{数式番号を@anairetta\_botの発言にする}
+% \author{紗衣(@faogr)}
+% \date{2013/3/28}
+% \maketitle
+% \StopEventually{}
+% \MakeShortVerb{\|}
+%
+%\section{発端}
+%  ---ある日のTL---\\
+% \noindent\textbf{tane\_yoshi}(@tane\_yoshi): @anairetta documentclass\{anairetta\}
+% \footnote{|https://twitter.com/tane_yoshi/status/315845942261731330|}\\
+% \textbf{あなちゃん}(@anairetta): 数式番号が @anairetta\_bot の発言からランダムに選ばれたツイートで表される
+% \footnote{|https://twitter.com/anairetta/status/315846509482635264|}
+%
+% \section{使用法}
+% \subsection{必要なファイル}
+%  lcgパッケージが無いと動きません．
+%  |http://www.ctan.org/tex-archive/macros/latex/contrib/lcg|
+%  に|lcg.dtx|および|lcg.ins|がありますので，
+%  |lcg.sty|を生成して適当な場所に置いて下さい．
+%  置くだけで良く，|\usepackage{lcg}| する必要はありません．
+%
+% \subsection{オプション}
+%  特にオプションを指定しなくても動作しますが，
+%  指定する場合は以下の書式で書いて下さい．
+%  \begin{quote}
+%   |\usepackage[file=|\textit{filename}|, seed=|\textit{number}|]{anairetta}|
+%   \end{quote}
+%  |file|，|seed|のいずれか一方のみを指定することもできます．
+%  ただし，両方指定する場合は |file|, |seed|の順でないとエラーが出ます．
+%
+%  \subsubsection{file}
+%   読み込むファイルを指定します．
+%   デフォルトは|anairetta.txt|です．
+%   このファイルの各行がそれぞれ数式番号として使われます．
+%
+%  \subsubsection{seed}
+%   乱数の種を指定します．
+%   デフォルトは0です．
+%   好きな数字を入れても良いですし，
+%   |\the\time| などを入れても良いでしょう．
+%   ただし，その場合，2回タイプセットする間に|\time|が変化してしまうと
+%   |\ref|が正しいものを指さなくなるので素早くタイプセットしましょう．
+%
+% \subsection{命令}
+%  このパッケージを読み込むことで使えるようになる命令は
+%  |\anairetta{|\textit{countername}|}|の一つだけです．
+%  これは|\arabic|, |\roman|等の代わりに使用可能です．
+%  
+%
+%  \subsubsection{数式番号について}
+%  このパッケージを読み込むと，
+%  |\renewcommand{\theequation}{\anairetta{equation}}|
+%  が実行され，数式番号が@anairetta\_botの発言になります．
+%
+% \section{コード}
+%
+%  間違っている場合はもちろんのこと，
+%  書き方が不自然である等の指摘もしていただけると喜びます．
+%
+%    \begin{macrocode}
+%<*anairetta>
+\NeedsTeXFormat{pLaTeX2e}
+\ProvidesPackage{anairetta}
+%    \end{macrocode}
+%
+%  lcgパッケージ．
+%
+%    \begin{macrocode}
+\RequirePackage[counter=ana@count]{lcg}
+%    \end{macrocode}
+%
+%  オプションの定義．
+%  使用するファイル名および乱数の種．ファイル名の方は初期化．
+%
+%    \begin{macrocode}
+\define@key{ana}{file}[anairetta.txt]{\def\anairetta@filename{#1}}
+\define@key{ana}{seed}[0]{\chgrand[seed = #1]}
+\setkeys{ana}{file}
+\ProcessOptionsWithKVr@nd{ana}
+%    \end{macrocode}
+%
+%  発言をコンマ区切りのリストで格納する命令と
+%  発言の要素数を入れるカウンタ．
+%
+%    \begin{macrocode}
+\def\@anairetta{}
+\def\addto@anairetta#1{\edef\@anairetta{\@anairetta\ifx\@anairetta\@empty\else,\fi\noexpand{#1}}}
+\newcount\@anairettalength
+%    \end{macrocode}
+%
+%  行数を数えながらファイルを読む．
+%
+%    \begin{macrocode}
+\@anairettalength\z@
+\openin\@inputcheck\anairetta@filename
+\def\anairetta@readfile{
+\read\@inputcheck to \anairetta@line
+\ifeof\@inputcheck\else
+\addto@anairetta{\anairetta@line}
+\advance\@anairettalength\@ne
+\expandafter\anairetta@readfile
+\fi}
+\anairetta@readfile
+\closein\z@
+%    \end{macrocode}
+%
+% 大きい方から順番に，
+% |\@anai|, |\@anaii|, $\ldots$ という命令を定義する．
+%
+%    \begin{macrocode}
+\newcount\@anairettacnta
+\newcount\@anairettacntb
+\@anairettacnta\@anairettalength
+\loop\ifnum\@anairettacnta>\z@
+ \edef\@@anairetta{\@anairetta}
+ \def\@anairetta{}
+ \@anairettacntb\@ne
+ \chgrand[first=\@ne, last=\@anairettacnta]\rand
+ \@for\@ana:=\@@anairetta\do{
+  \ifnum\@anairettacntb=\c@ana@count
+   \expandafter\edef\csname @ana\@roman\@anairettacnta\endcsname{\@ana}
+  \else
+   \addto@anairetta{\@ana}
+  \fi
+  \advance\@anairettacntb\@ne}
+ \advance\@anairettacnta\m@ne 
+\repeat
+%    \end{macrocode}
+%
+%  カウンタ出力命令の定義および|\theequation|の上書き．
+%
+%    \begin{macrocode}
+\def\anairetta#1{%
+\ifnum\@anairettalength<\csname c@#1\endcsname\@ctrerr\fi
+\csname @ana\roman{#1}\endcsname}
+\renewcommand{\theequation}{\anairetta{equation}}
+%    \end{macrocode}
+%
+% 以上．
+%
+%    \begin{macrocode}
+%</anairetta>
+\endinput
+%    \end{macrocode}
+%
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%%
+% \Finale
